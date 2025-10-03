@@ -105,20 +105,37 @@ class KTRProcessor:
             return None
 
     async def process_all_files(self):
-        """Process all KTR files with progress bar"""
+        """Process all KTR files concurrently with semaphore and progress bar"""
         ktr_files = self.find_ktr_files()
 
         if not ktr_files:
             logger.warning("No KTR files found to process")
             return
 
-        logger.info(f"Starting to process {len(ktr_files)} files")
+        logger.info(f"Starting to process {len(ktr_files)} files with concurrency limit of 3")
+
+        # Create semaphore to limit concurrent tasks to 3
+        semaphore = asyncio.Semaphore(3)
+
+        # Create a wrapper function that uses semaphore
+        async def process_with_semaphore(file_path: Path):
+            async with semaphore:
+                result = await self.process_single_file(file_path)
+                return file_path, result
+
+        # Create all tasks
+        tasks = [process_with_semaphore(file_path) for file_path in ktr_files]
 
         # Process files with progress bar
         with tqdm(total=len(ktr_files), desc="Processing KTR files") as pbar:
-            for file_path in ktr_files:
-                await self.process_single_file(file_path)
+            completed_count = 0
+
+            # Process tasks as they complete
+            for coro in asyncio.as_completed(tasks):
+                file_path, result = await coro
+                completed_count += 1
                 pbar.update(1)
+                pbar.set_postfix({"Completed": f"{completed_count}/{len(ktr_files)}"})
 
         # Write failed files report if any
         if self.failed_files:

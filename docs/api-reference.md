@@ -68,10 +68,17 @@ async def process_all_files(self) -> None
 **返回**: 无
 
 **功能**:
-- 批量处理所有KTR文件
-- 显示进度条
+- 批量并发处理所有KTR文件（最多3个并发）
+- 使用Semaphore控制并发数量
+- 通过asyncio.as_completed实现实时进度追踪
+- 显示进度条和完成统计
 - 生成失败报告
 - 输出处理统计
+
+**并发机制**:
+- 创建`asyncio.Semaphore(3)`限制并发数量
+- 使用`process_with_semaphore`包装函数确保信号量控制
+- 通过`asyncio.as_completed`实时获取完成的任务
 
 #### write_failed_report
 ```python
@@ -203,7 +210,14 @@ async def custom_dir():
 - **成功文件数**: `len(ktr_files) - len(failed_files)`
 - **失败文件数**: `len(failed_files)`
 - **LLM使用量**: `result.usage()`
+- **并发数量**: 固定为3个并发任务
 
 ### 进度监控
-- **进度条**: 实时显示处理进度
+- **进度条**: 实时显示处理进度和完成数量
+- **完成统计**: 显示"已完成/总数"格式
 - **日志记录**: 详细的处理状态信息
+
+### 并发性能优化
+- **信号量控制**: 限制最大并发数为3，避免资源耗尽
+- **实时追踪**: 通过as_completed实现任务完成时的即时响应
+- **任务队列**: 所有文件任务预先创建，提高执行效率

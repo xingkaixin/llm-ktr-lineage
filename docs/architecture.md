@@ -48,9 +48,11 @@ LLM-KTR-Lineage 是一个基于LLM的Pentaho Kettle转换文件分析工具，�
 - `KTRProcessor` 专注于KTR文件处理
 - 文件发现、处理、错误处理职责分离
 
-### 2. 异步处理
+### 2. 并发异步处理
 - 使用asyncio实现异步文件处理
-- 避免I/O阻塞，提高处理效率
+- 通过Semaphore控制并发数量（默认3个并发）
+- 使用asyncio.as_completed实现实时进度追踪
+- 避免I/O阻塞，显著提高处理效率
 
 ### 3. 错误恢复
 - 单文件失败不影响其他文件处理
