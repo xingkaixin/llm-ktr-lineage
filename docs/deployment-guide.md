@@ -31,7 +31,7 @@ uv sync
 ### 3. 配置环境变量
 复制示例配置文件：
 ```bash
-cp sample.env .env
+cp .env.example .env
 ```
 
 编辑`.env`文件，配置以下参数：
